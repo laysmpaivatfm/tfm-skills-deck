@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>The TFM Skills Plugin</title>
+<style>
+  :root {
+    --bg: #0b0d17;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.09);
+    --text: #f2f3f8;
+    --muted: #9aa0b5;
+    --grad: linear-gradient(95deg, #a78bfa 0%, #ec4899 55%, #f97316 100%);
+    --grad-cool: linear-gradient(95deg, #38bdf8 0%, #8b5cf6 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, Roboto, sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: .32; pointer-events: none; }
+  #glow1 { width: 55vw; height: 55vw; background: #5b21b6; top: -20vw; left: -15vw; }
+  #glow2 { width: 45vw; height: 45vw; background: #9d174d; bottom: -18vw; right: -12vw; }
+  #glow3 { width: 30vw; height: 30vw; background: #0c4a6e; top: 40%; left: 60%; opacity: .22; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 5vh 7vw;
+    opacity: 0; visibility: hidden; transform: translateY(24px);
+    transition: opacity .45s ease, transform .45s ease, visibility .45s;
+  }
+  .slide.active { opacity: 1; visibility: visible; transform: translateY(0); }
+
+  .kicker {
+    display: inline-flex; align-items: center; gap: .5em;
+    font-size: clamp(10px, 1vw, 14px); font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 1.8vh;
+  }
+  .kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--grad); display: inline-block; }
+  .badge {
+    display: inline-block; align-self: flex-start; padding: .45em 1em; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: clamp(11px, 1.05vw, 15px); font-weight: 600; color: var(--muted); margin-bottom: 2.5vh;
+  }
+  .badge.live { border-color: rgba(236,72,153,.5); color: #f9a8d4; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(236,72,153,.25); } 50% { box-shadow: 0 0 0 10px rgba(236,72,153,0); } }
+
+  h1 { font-size: clamp(38px, 5.4vw, 84px); font-weight: 800; line-height: 1.06; letter-spacing: -0.02em; }
+  h2 { font-size: clamp(26px, 3.4vw, 52px); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 2.4vh; }
+  .gradient-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .gradient-cool { background: var(--grad-cool); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { font-size: clamp(15px, 1.6vw, 24px); color: var(--muted); line-height: 1.5; max-width: 66ch; margin-top: 2vh; }
+  .footer-note { position: absolute; bottom: 5vh; left: 7vw; font-size: clamp(12px, 1.1vw, 16px); color: var(--muted); }
+
+  .title-stat {
+    display: flex; align-items: center; gap: 1.4vw; margin-top: 5vh;
+    font-size: clamp(14px, 1.5vw, 22px); color: var(--muted); line-height: 1.45;
+  }
+  .title-stat .stat-num { font-size: clamp(48px, 6vw, 96px); font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+
+  /* skill slide layout */
+  .skill-head { display: flex; align-items: center; gap: 1.2vw; margin-bottom: 2.2vh; flex-wrap: wrap; }
+  .skill-head .icon { font-size: clamp(26px, 2.8vw, 44px); }
+  .skill-head h2 { margin-bottom: 0; font-size: clamp(24px, 2.9vw, 46px); }
+  .chip {
+    padding: .4em .9em; border-radius: 999px; font-size: clamp(11px, 1.05vw, 15px); font-weight: 700;
+    border: 1px solid rgba(110,231,183,.35); color: #6ee7b7; background: rgba(110,231,183,.07);
+  }
+  .chip.dim { border-color: var(--border); color: var(--muted); background: var(--surface); }
+  .two-col { display: grid; grid-template-columns: 1.05fr 1fr; gap: 2.4vw; align-items: start; }
+  .flow { margin-bottom: 1.8vh; }
+  .flow .row { display: flex; gap: .8em; font-size: clamp(13px, 1.25vw, 18px); padding: .8vh 0; line-height: 1.45; }
+  .flow .row b { min-width: 6.2em; color: var(--muted); font-weight: 600; font-size: .85em; letter-spacing: .08em; text-transform: uppercase; padding-top: .15em; }
+  .callout {
+    border: 1px solid rgba(167,139,250,.35); background: rgba(139,92,246,.08); border-radius: 14px;
+    padding: 1.6vh 1.2vw; font-size: clamp(12px, 1.15vw, 17px); line-height: 1.5; margin-top: 1vh;
+  }
+  .callout b { color: #c4b5fd; }
+  .mono {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    background: rgba(0,0,0,.45); border: 1px solid var(--border); border-radius: 14px;
+    padding: 2vh 1.5vw; font-size: clamp(11px, 1.05vw, 15px); line-height: 1.7; color: #c9d1e3;
+    white-space: pre-wrap;
+  }
+  .mono .c { color: #6b7280; }
+  .mono .k { color: #a78bfa; font-weight: 600; }
+  .mono .s { color: #6ee7b7; }
+  .mono .r { color: #fda4af; }
+  .mono-label {
+    font-size: clamp(10px, .95vw, 13px); font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: .8vh;
+  }
+
+  .cards { display: grid; gap: 1.2vw; margin-top: 1vh; }
+  .cards.c2 { grid-template-columns: repeat(2, 1fr); }
+  .cards.c3 { grid-template-columns: repeat(3, 1fr); }
+  .cards.c4 { grid-template-columns: repeat(4, 1fr); }
+  .cards.c5 { grid-template-columns: repeat(5, 1fr); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.8vh 1.2vw; backdrop-filter: blur(8px);
+  }
+  .card .icon { font-size: clamp(20px, 2.2vw, 34px); margin-bottom: 1vh; display: block; }
+  .card h3 { font-size: clamp(13px, 1.3vw, 20px); font-weight: 700; margin-bottom: .7vh; }
+  .card p { font-size: clamp(11px, 1.05vw, 16px); color: var(--muted); line-height: 1.45; }
+  .card .delta { margin-top: 1.2vh; font-size: clamp(11px, 1.1vw, 17px); font-weight: 700; }
+  .card .delta .from { color: #fda4af; text-decoration: line-through; text-decoration-thickness: 2px; opacity: .8; }
+  .card .delta .to { color: #6ee7b7; }
+  .card .delta .arrow { color: var(--muted); margin: 0 .3em; font-weight: 400; }
+  .card.tpl { padding: 1.4vh 1vw; }
+  .card.tpl h3 { font-size: clamp(11px, 1.05vw, 15px); font-family: "SF Mono", ui-monospace, Menlo, monospace; color: #c4b5fd; }
+  .card.tpl p { font-size: clamp(10px, .95vw, 13px); }
+
+  .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2em; height: 2em; border-radius: 12px; background: var(--grad);
+    font-weight: 800; font-size: clamp(13px, 1.4vw, 20px); margin-bottom: 1.2vh; color: #fff;
+  }
+  .quote-line {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: clamp(10px, 1vw, 14px);
+    color: #6ee7b7; background: rgba(0,0,0,.35); border-radius: 8px; padding: .7em .9em; margin-top: 1.2vh; line-height: 1.5; display: block;
+  }
+
+  /* animated mind maps */
+  .mm-stage { position: relative; width: 100%; height: 62vh; margin-top: 1vh; }
+  .mm-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mm-line { stroke: rgba(255,255,255,.22); stroke-width: .35; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .slide.active .mm-line { animation: mmdraw .5s ease both; animation-delay: var(--d, 0s); }
+  @keyframes mmdraw { to { stroke-dashoffset: 0; } }
+  .mm-node {
+    position: absolute; transform: translate(-50%,-50%) scale(0); opacity: 0;
+    background: rgba(11,13,23,.88); border: 1px solid var(--border); border-radius: 12px;
+    padding: .9vh .7vw; font-size: clamp(10px, .95vw, 14px); line-height: 1.3; text-align: center;
+    max-width: 13vw; color: var(--text); z-index: 1;
+  }
+  .slide.active .mm-node { animation: mmpop .45s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--d, 0s); }
+  @keyframes mmpop {
+    from { transform: translate(-50%,-50%) scale(0); opacity: 0; }
+    to { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  }
+  .mm-node .mi { display: block; font-size: clamp(14px, 1.5vw, 22px); margin-bottom: .3vh; }
+  .mm-node.research { border-color: rgba(56,189,248,.6); }
+  .mm-node.idea { border-color: rgba(167,139,250,.6); }
+  .mm-node.copy { border-color: rgba(236,72,153,.6); }
+  .mm-node.ops { border-color: rgba(249,115,22,.6); }
+  .mm-node.gmx { border-color: rgba(110,231,183,.65); border-style: dashed; color: var(--muted); }
+  .mm-center {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(0); opacity: 0;
+    background: var(--grad); border-radius: 16px; padding: 1.6vh 1.4vw; font-weight: 800;
+    font-size: clamp(13px, 1.3vw, 20px); text-align: center; color: #fff; z-index: 2;
+    box-shadow: 0 10px 40px rgba(236,72,153,.35);
+  }
+  .slide.active .mm-center { animation: mmpop .5s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--d, 0s); }
+  .legend { display: flex; gap: 1.4vw; flex-wrap: wrap; margin-top: .4vh; }
+  .legend span { display: inline-flex; align-items: center; gap: .45em; font-size: clamp(10px, 1vw, 14px); color: var(--muted); }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* mind map hover highlight */
+  .mm-node { transition: scale .2s ease, box-shadow .25s ease, border-color .2s ease, background .2s ease; }
+  .mm-node:hover {
+    scale: 1.1; z-index: 3; background: rgba(20,23,40,.97);
+    border-color: rgba(255,255,255,.45); box-shadow: 0 0 26px rgba(255,255,255,.18);
+  }
+  .mm-node.research:hover { border-color: #38bdf8; box-shadow: 0 0 30px rgba(56,189,248,.4); }
+  .mm-node.idea:hover { border-color: #a78bfa; box-shadow: 0 0 30px rgba(167,139,250,.4); }
+  .mm-node.copy:hover { border-color: #ec4899; box-shadow: 0 0 30px rgba(236,72,153,.4); }
+  .mm-node.ops:hover { border-color: #f97316; box-shadow: 0 0 30px rgba(249,115,22,.4); }
+  .mm-node.gmx:hover { border-color: #6ee7b7; box-shadow: 0 0 30px rgba(110,231,183,.4); color: var(--text); }
+  .mm-center { transition: scale .2s ease, box-shadow .25s ease; }
+  .mm-center:hover { scale: 1.06; box-shadow: 0 14px 55px rgba(236,72,153,.55); }
+
+  /* staggered entrance animations */
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  .slide.active .cards > *,
+  .slide.active .pipeline .pstep,
+  .slide.active .step-row .step,
+  .slide.active ul.clean li,
+  .slide.active .flow .row,
+  .slide.active .shot-wrap,
+  .slide.active .mono-label,
+  .slide.active .mono,
+  .slide.active .callout,
+  .slide.active .quote-line,
+  .slide.active .punchline,
+  .slide.active .legend,
+  .slide.active .title-stat { animation: rise .55s cubic-bezier(.22,.9,.36,1) both; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(1) { animation-delay: .08s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(2) { animation-delay: .18s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(3) { animation-delay: .28s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(4) { animation-delay: .38s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(5) { animation-delay: .48s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(6) { animation-delay: .56s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(7) { animation-delay: .64s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(8) { animation-delay: .72s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(9) { animation-delay: .8s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(10) { animation-delay: .88s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(11) { animation-delay: .96s; }
+  .slide.active :is(.cards, .pipeline, .step-row, ul.clean, .flow) > *:nth-child(12) { animation-delay: 1.04s; }
+  .slide.active .mono-label { animation-delay: .18s; }
+  .slide.active .mono { animation-delay: .26s; }
+  .slide.active .shot-wrap { animation-delay: .3s; }
+  .slide.active .callout { animation-delay: .55s; }
+  .slide.active .quote-line { animation-delay: .65s; }
+  .slide.active .legend { animation-delay: .1s; }
+  .slide.active .title-stat { animation-delay: .35s; }
+  .slide.active .punchline { animation-delay: .75s; }
+
+  /* hover lift on cards and steps */
+  .card, .pstep, .step { transition: translate .2s ease, border-color .2s ease, box-shadow .25s ease; }
+  .card:hover, .step:hover { translate: 0 -4px; border-color: rgba(255,255,255,.25); box-shadow: 0 14px 40px rgba(0,0,0,.4); }
+  .pstep:hover { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.07); }
+
+  /* report slide: pipeline + screenshot */
+  .report-col { grid-template-columns: 1.1fr .9fr; align-items: center; }
+  .pipeline { display: flex; flex-direction: column; gap: 1vh; margin-bottom: 1.6vh; }
+  .pstep {
+    display: flex; gap: 1vw; align-items: flex-start;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.3vh 1.1vw;
+  }
+  .pstep .picon { font-size: clamp(16px, 1.7vw, 26px); padding-top: .15em; }
+  .pstep h4 { font-size: clamp(12px, 1.2vw, 17px); font-weight: 700; margin-bottom: .3vh; }
+  .pstep p { font-size: clamp(10px, 1vw, 14px); color: var(--muted); line-height: 1.45; }
+  .shot-wrap { display: flex; flex-direction: column; align-items: center; gap: 1vh; }
+  .shot {
+    max-height: 76vh; max-width: 100%; border-radius: 14px; border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,.5); display: block;
+    cursor: zoom-in; transition: transform .2s ease;
+  }
+  .shot:hover { transform: scale(1.015); }
+
+  /* lightbox */
+  #lightbox {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(5,6,12,.92); backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility .25s;
+    cursor: zoom-out;
+  }
+  #lightbox.open { opacity: 1; visibility: visible; }
+  #lightbox img {
+    max-width: 94vw; max-height: 94vh; border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.15); box-shadow: 0 30px 100px rgba(0,0,0,.7);
+    transform: scale(.96); transition: transform .25s ease;
+  }
+  #lightbox.open img { transform: scale(1); }
+  #lightbox .close-hint {
+    position: fixed; top: 24px; right: 32px; font-size: 13px; color: var(--muted); font-weight: 600;
+  }
+  .shot-caption { font-size: clamp(10px, .95vw, 13px); color: var(--muted); }
+  .shot-wrap a { text-decoration: none; }
+  .shot-actions { display: flex; gap: .8vw; flex-wrap: wrap; justify-content: center; }
+  .btn-link {
+    display: inline-flex; align-items: center; gap: .4em;
+    padding: .55em 1.1em; border-radius: 999px;
+    background: var(--grad); color: #fff !important;
+    font-size: clamp(11px, 1.05vw, 15px); font-weight: 700;
+    box-shadow: 0 6px 20px rgba(236,72,153,.3);
+    transition: transform .15s ease;
+  }
+  .btn-link:hover { transform: translateY(-2px); }
+  .btn-link.dim {
+    background: var(--surface); color: var(--muted) !important;
+    border: 1px solid var(--border); box-shadow: none;
+  }
+
+  .step-row { display: flex; gap: 1.2vw; margin-top: 1vh; }
+  .step { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2vh 1.2vw; }
+  .step .n { font-size: clamp(18px, 2.2vw, 34px); font-weight: 800; opacity: .9; }
+  .step h4 { font-size: clamp(12px, 1.25vw, 18px); font-weight: 700; margin: .8vh 0 .6vh; }
+  .step p { font-size: clamp(10px, 1vw, 14px); color: var(--muted); line-height: 1.4; }
+
+  .punchline { font-size: clamp(17px, 2vw, 30px); font-weight: 700; margin-top: 3vh; }
+
+  ul.clean { list-style: none; margin-top: 1vh; }
+  ul.clean li {
+    font-size: clamp(14px, 1.5vw, 23px); padding: 1.2vh 0 1.2vh 2.2em; position: relative; line-height: 1.45;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  ul.clean li:last-child { border-bottom: none; }
+  ul.clean li::before {
+    content: "→"; position: absolute; left: 0; top: 1.2vh;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800;
+  }
+  ul.clean li .mut { color: var(--muted); }
+
+  #progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--grad); width: 0%; transition: width .4s ease; z-index: 10; }
+  #counter { position: fixed; bottom: 24px; right: 32px; font-size: 13px; color: var(--muted); z-index: 10; font-weight: 600; }
+  #hint { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 13px; color: var(--muted); z-index: 10; transition: opacity 1s ease; }
+  #hint.hide { opacity: 0; }
+  .nav-arrow {
+    position: fixed; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all .2s;
+  }
+  .nav-arrow:hover { color: var(--text); border-color: rgba(255,255,255,.3); }
+  #prev { left: 20px; } #next { right: 20px; }
+</style>
+</head>
+<body>
+<div class="glow" id="glow1"></div>
+<div class="glow" id="glow2"></div>
+<div class="glow" id="glow3"></div>
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="hint">Use ← → or space to navigate</div>
+<button class="nav-arrow" id="prev">←</button>
+<button class="nav-arrow" id="next">→</button>
+<div id="lightbox"><span class="close-hint">Click or press Esc to close</span><img src="" alt=""></div>
+
+<!-- ============ SECTION A: OPENING ============ -->
+
+<!-- 1. TITLE -->
+<section class="slide active">
+  <div class="badge">TFM Team Call · July 2, 2026</div>
+  <h1>Every step of our process<br>now runs on <span class="gradient-text">skills.</span></h1>
+  <p class="sub">Claude skills and the TFM plugin: how the whole GM workflow is automated today, and how any GM can build their own skills and take the time back.</p>
+  <div class="title-stat"><span class="stat-num gradient-cool">~40 hrs</span><span>saved every month, on my accounts alone.<br>Production time became review time.</span></div>
+  <div class="footer-note">Lays Paiva · Growth</div>
+</section>
+
+<!-- 3. THE MAP -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>What's live in the plugin</div>
+  <h2>One command per <span class="gradient-cool">chore.</span></h2>
+  <div class="cards c5">
+    <div class="card">
+      <span class="icon">📊</span>
+      <h3>Weekly reports</h3>
+      <p>AMO, BBG, IL, JS, HowToAI, WW Friday</p>
+      <div class="delta"><span class="from">2-3h</span><span class="arrow">→</span><span class="to">45 min</span></div>
+    </div>
+    <div class="card">
+      <span class="icon">📑</span>
+      <h3>Biweekly docs</h3>
+      <p>IL, WW and JS Notion meeting pages</p>
+      <div class="delta"><span class="from">1h</span><span class="arrow">→</span><span class="to">30 min</span></div>
+    </div>
+    <div class="card">
+      <span class="icon">🗓️</span>
+      <h3>Monday update</h3>
+      <p>Pod update drafted from Slack + reports</p>
+      <div class="delta"><span class="from">30 min</span><span class="arrow">→</span><span class="to">5 min</span></div>
+    </div>
+    <div class="card">
+      <span class="icon">💡</span>
+      <h3>Ideation</h3>
+      <p>Concept ideation + 12 creative templates + competitor research</p>
+      <div class="delta"><span class="from">2h</span><span class="arrow">→</span><span class="to">20 min</span></div>
+    </div>
+    <div class="card">
+      <span class="icon">🧰</span>
+      <h3>Client ops</h3>
+      <p>Kick-off prep, fill playbook, ads launch check, newsletter analyzer, setup wizard</p>
+      <div class="delta"><span class="from">1-2h</span><span class="arrow">→</span><span class="to">30 min</span></div>
+    </div>
+  </div>
+  <div class="punchline">Next: what each one actually does, <span class="gradient-text">instructions included.</span></div>
+</section>
+
+<!-- ============ SECTION B: THE SKILLS, ONE BY ONE ============ -->
+
+<!-- 4a. CONCEPT IDEATION: THE RUN -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · 1 of 4</div>
+  <div class="skill-head">
+    <span class="icon">💡</span>
+    <h2>/concept-ideation</h2>
+    <span class="chip">research to designer-ready in ~20 min</span>
+  </div>
+  <div class="two-col report-col">
+    <div>
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="picon">🧭</span>
+          <div><h4>One line kicks it off</h4>
+          <p>"/concept-ideation for How to AI", plus a Foreplay ad ID as inspiration if you have one. First thing it does: reads its own rules and IDs, and resolves which GM is running it.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">❓</span>
+          <div><h4>It interviews you before acting</h4>
+          <p>Two pre-flight questions: how many hook variations (3-5, across confession, peer-to-peer, counterintuitive, identity, specificity angles) and whether you want a client approval doc. No surprises mid-run.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🔬</span>
+          <div><h4>Then it researches, 7 sources</h4>
+          <p>Client Notion page, live website, Reddit/Quora audience language, both Slack channels, the client's own ad account, Foreplay swipe, newsletter analysis.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">✍️</span>
+          <div><h4>Writes hooks + body in the client's voice</h4>
+          <p>Then it stops and asks: "Approved to build?" Nothing gets created until you say yes.</p></div>
+        </div>
+      </div>
+      <span class="quote-line">"Define 'winning' by SPEND, not just KPI.
+The highest-spend ads are the ones the media
+buyer is actively scaling: proven winners."</span>
+    </div>
+    <div class="shot-wrap">
+      <img class="shot" src="assets/concept-prompt.png" alt="" style="max-height:36vh">
+      <img class="shot" src="assets/concept-questions.png" alt="" style="max-height:36vh">
+      <div class="shot-caption">The real run, today: one line in, pre-flight questions back</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4b. CONCEPT IDEATION: THE OUTPUT -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · 2 of 4</div>
+  <div class="skill-head">
+    <span class="icon">💡</span>
+    <h2>20 minutes later: <span class="gradient-cool">DCT_167 "The AI Person"</span></h2>
+  </div>
+  <div class="two-col report-col">
+    <div class="shot-wrap">
+      <img class="shot" src="assets/concept-copy.png" alt="" style="max-height:74vh">
+      <div class="shot-caption">The copy: 3 hooks + universal body, each with a flow check</div>
+    </div>
+    <div>
+      <div class="shot-wrap" style="margin-bottom:1.6vh">
+        <img class="shot" src="assets/concept-final.png" alt="">
+        <div class="shot-caption">Everything built and verified: concept page, designer brief, Drive folder</div>
+      </div>
+      <div class="callout"><b>After one "approved":</b> the internal Notion concept page, the Drive folder with Raw assets + Final output, and the designer brief, already filled: reference video, typesetting rules, the 3-column script table. Now it's press a button to the designer, and in 24h the concept is live.</div>
+      <div class="callout"><b>It even audits itself:</b> at the end of every run it lists fixes worth baking back into its own instructions. The skill gets smarter every time someone uses it.</div>
+      <div class="shot-actions" style="margin-top:1.6vh">
+        <a class="btn-link" href="https://app.notion.com/p/readthefeed/DCT_167_HTAI_The-AI-Person-37af4a126e06810f8caffa21b3f60360" target="_blank" rel="noopener">Open DCT_167 on Notion ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4c. CONCEPT IDEATION: STEERABLE -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · still concept-ideation</div>
+  <div class="skill-head">
+    <span class="icon">🎛️</span>
+    <h2>Skills are <span class="gradient-cool">steerable</span>, not all-or-nothing.</h2>
+  </div>
+  <div class="two-col report-col">
+    <div>
+      <p class="sub" style="margin-top:0; margin-bottom:1.8vh">Real case: Luiz already had the copy written and approved in a Google Sheet. He doesn't need the research or the copywriting. So you just tell the skill that, in plain English:</p>
+      <div class="mono-label">The prompt</div>
+      <div class="mono"><span class="k">/concept-ideation</span> for Imaging Wire.
+
+The copy is already approved in this
+Sheet: <span class="s">[link]</span>. Skip the research and
+the copywriting.
+
+Just run the build steps: internal
+Notion concept page, Drive folder,
+and the designer brief.</div>
+      <div class="callout"><b>The mindset shift:</b> a skill is written instructions, not a locked pipeline. Enter at any step, skip any step, swap any input. If you can say it, the skill can do it.</div>
+    </div>
+    <div class="shot-wrap">
+      <img class="shot" src="assets/concept-sheet.png" alt="">
+      <div class="shot-caption">Luiz's copy, already done in Sheets. The skill picks up from here.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4d. CONCEPT IDEATION: MAKE IT YOURS -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · make it yours</div>
+  <div class="skill-head">
+    <span class="icon">🔧</span>
+    <h2>Want to change the skill itself? <span class="gradient-text">You're not blocked.</span></h2>
+  </div>
+  <div class="two-col">
+    <div>
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="picon">🔒</span>
+          <div><h4>True: you can't edit the plugin</h4>
+          <p>The plugin syncs from a repo only I push to. That protects everyone's setup from accidental breakage.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">📋</span>
+          <div><h4>Also true: you can fork it in one sentence</h4>
+          <p>Ask Claude to read the plugin's skill, pull everything useful, and create your own copy in your personal setup. Claude does the duplication for you.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">✏️</span>
+          <div><h4>Customize your copy freely</h4>
+          <p>Your rules, your clients, your extra steps. Your version and the plugin's coexist, you choose which to run.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🚢</span>
+          <div><h4>If yours is better, it ships</h4>
+          <p>Send me the improvement and I push it to the plugin. Your fix becomes everyone's fix, with your name on it.</p></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mono-label">Say this to Claude, word for word</div>
+      <div class="mono">Read the concept-ideation skill from
+the tfm-skills plugin. Create my own
+personal copy of it as a new skill
+called <span class="k">my-concept-ideation</span>, keeping
+everything useful.
+
+Then change it so that it <span class="s">[your
+improvement: always asks for a Sheet
+with existing copy / uses my client
+list / adds a TikTok step...]</span></div>
+      <div class="callout"><b>Why this matters:</b> the plugin is the floor, not the ceiling. Nobody needs my permission, or a GitHub account, to make these skills fit how they work.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4f. TEMPLATES OVERVIEW -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · 3 of 4</div>
+  <div class="skill-head">
+    <span class="icon">🎨</span>
+    <h2>12 creative templates</h2>
+    <span class="chip">a finished concept + Canva + brief in ~20 min</span>
+  </div>
+  <div class="two-col" style="grid-template-columns: .9fr 1.1fr; align-items: center;">
+    <div class="cards c2" style="margin-top:0">
+      <div class="card tpl"><h3>/because-you-read</h3><p>Before/after transformation POV</p></div>
+      <div class="card tpl"><h3>/confession</h3><p>First-person confession hook</p></div>
+      <div class="card tpl"><h3>/if-you</h3><p>"If you [X], this is for you" callout</p></div>
+      <div class="card tpl"><h3>/not-read</h3><p>3 ironic reasons NOT to read</p></div>
+      <div class="card tpl"><h3>/please-stop</h3><p>Pattern-interrupt "please stop doing X"</p></div>
+      <div class="card tpl"><h3>/read-x</h3><p>"Read [Newsletter]!" value-prop body</p></div>
+      <div class="card tpl"><h3>/secret-expert</h3><p>Hook-only insider flex</p></div>
+      <div class="card tpl"><h3>/should-i</h3><p>Pie-chart poll, "Yes, but in orange"</p></div>
+      <div class="card tpl"><h3>/speaking-directly</h3><p>Audience callout, direct address</p></div>
+      <div class="card tpl"><h3>/they-were-impressed</h3><p>Social-proof anecdote POV</p></div>
+      <div class="card tpl"><h3>/wish-i-knew</h3><p>First-person regret testimonial</p></div>
+      <div class="card tpl"><h3>/x-but-for-y</h3><p>"[Famous X], but for [Y audience]"</p></div>
+    </div>
+    <div class="shot-wrap">
+      <img class="shot" src="assets/kickstart-folder.png" alt="">
+      <div class="shot-caption">The Kickstart templates folder in Canva: every master designed, fonts and layouts locked. The skills duplicate from here, the originals never get touched.</div>
+    </div>
+  </div>
+  <div class="punchline">Each one: detects the next DCT number, writes the variations, builds the Canva, the Drive folder, the Notion page and the designer brief. <span class="gradient-text">You approve, it ships.</span></div>
+</section>
+
+<!-- 4h. IF-YOU: START -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · inside /if-you-template</div>
+  <div class="skill-head">
+    <span class="icon">🟦</span>
+    <h2>/if-you-template, <span class="gradient-cool">start to shipped.</span></h2>
+  </div>
+  <div class="two-col report-col">
+    <div>
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="picon">🖼️</span>
+          <div><h4>The master is ready</h4>
+          <p>Layout, fonts and safe zones designed once in Canva. The skill duplicates it for each new DCT.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🗣️</span>
+          <div><h4>Start it however you want</h4>
+          <p>"/if-you-template AMO" is enough, it handles the rest. Or steer it: my real first prompt handed it a winning ad and asked for more variations of that copy. Any specificity you add just guides it.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🧠</span>
+          <div><h4>It grounds itself before writing</h4>
+          <p>Detects the next DCT number, reads the client's playbook, don'ts and current editorial context, then drafts.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="shot-wrap">
+      <img class="shot" src="assets/ifyou-master.png" alt="" style="max-height:42vh">
+      <img class="shot" src="assets/ifyou-prompt.png" alt="" style="max-height:18vh">
+      <div class="shot-caption">The If You master in Canva, and the actual one-line prompt that started the run</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4i. IF-YOU: THE DRAFT -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · inside /if-you-template</div>
+  <div class="skill-head">
+    <span class="icon">📝</span>
+    <h2>Minutes later: <span class="gradient-cool">the draft.</span></h2>
+  </div>
+  <div class="two-col report-col">
+    <div class="shot-wrap">
+      <img class="shot" src="assets/ifyou-copy.png" alt="" style="max-height:74vh">
+      <div class="shot-caption">DCT_115/116 AMO If You: 5 qualifier variations, cooked in 2m 41s</div>
+    </div>
+    <div>
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="picon">🎯</span>
+          <div><h4>5 variations, each with an angle map</h4>
+          <p>Recognition, identity, behavior. Every qualifier prequalifies a real operator, so juniors and hobbyists scroll past.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🧾</span>
+          <div><h4>Grounded and rule-checked</h4>
+          <p>Variations cite the current articles they come from, and AMO's don'ts are honored automatically: no em dash, no job-level disqualifier, no "legacy media."</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🔁</span>
+          <div><h4>It ends with a question, not an action</h4>
+          <p>"Approve, or tweak any line before I push to Canva?" This is the back-and-forth zone: iterate in plain English until you're happy. Nothing gets built until you say so.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4j. IF-YOU: SHIPPED -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · inside /if-you-template</div>
+  <div class="skill-head">
+    <span class="icon">🚢</span>
+    <h2>One "approved" later: <span class="gradient-text">DCT_116, built.</span></h2>
+  </div>
+  <div class="two-col report-col">
+    <div class="shot-wrap">
+      <img class="shot" src="assets/ifyou-handoff.png" alt="" style="max-height:72vh">
+      <div class="shot-caption">The full handoff: Canva, Drive folder, Notion concept page, designer brief</div>
+    </div>
+    <div>
+      <div class="shot-wrap" style="margin-bottom:1.4vh">
+        <img class="shot" src="assets/ifyou-canva.png" alt="">
+        <div class="shot-caption">The final creative in Canva: 4 pages, one per approved variation, on the AMO master</div>
+      </div>
+      <div class="callout"><b>Your only touches left:</b> confirm the brand background and name line in Canva, approve the final, and it exports the PNGs to the Drive Final output folder. Concept page, brief and folders are already linked together.</div>
+      <div class="shot-actions" style="margin-top:1.4vh">
+        <a class="btn-link" href="https://app.notion.com/p/374f4a126e0681a98c5ad1bd8df33b7a" target="_blank" rel="noopener">Open the DCT_116 concept page ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. WEEKLY REPORTS -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · 4 of 4</div>
+  <div class="skill-head">
+    <span class="icon">📊</span>
+    <h2>/howtoai-weekly-report</h2>
+    <span class="chip dim">one of 6 weekly report skills</span>
+    <span class="chip">2-3h → 45 min, per client, every week</span>
+  </div>
+  <div class="two-col report-col">
+    <div>
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="picon">🌐</span>
+          <div><h4>Claude reads the Substack dashboard in Chrome</h4>
+          <p>Pulls total subscribers and total opens, then does the math itself: open rate and email CTR, with WoW comparison.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">📈</span>
+          <div><h4>Pipeboard pulls the Meta side</h4>
+          <p>Spend, CPL, leads, CPM, ad CTR per creative, plus the fb.me links so Ruben can click straight into each ad.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">✍️</span>
+          <div><h4>Writes the report in my voice</h4>
+          <p>Account overview, top 3 creatives, insights, winning angle, next steps, TL;DR. First person, no AI tells.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">💬</span>
+          <div><h4>Slack connector posts to #pm-lays</h4>
+          <p>I review the draft there first. Nothing reaches the client until I've read every number.</p></div>
+        </div>
+      </div>
+      <div class="callout"><b>Same pipeline, 6 clients:</b> only the sources swap. Beehiiv for AMO and BBG, the TFM dashboard for IL, Hex for Workweek. Write the brief once per client, Friday runs itself.</div>
+    </div>
+    <div class="shot-wrap">
+      <img class="shot" src="assets/howtoai-report.png" alt="">
+      <div class="shot-actions">
+        <a class="btn-link" href="https://thefeedmedia.slack.com/archives/C0ASA0JUS0J/p1780930553131729" target="_blank" rel="noopener">Open the draft in #pm-lays ↗</a>
+        <a class="btn-link dim" href="https://thefeedmedia.slack.com/archives/C09KSME0Z3P/p1780930608743219" target="_blank" rel="noopener">Final message to client ↗</a>
+      </div>
+      <div class="shot-caption">Real output, sent June 8</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4e. BUILD YOUR OWN WEEKLY REPORT -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · build your own friday report</div>
+  <div class="skill-head">
+    <span class="icon">🛠️</span>
+    <h2>Your client's report: <span class="gradient-cool">4 ingredients.</span></h2>
+  </div>
+  <div class="two-col">
+    <div>
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="picon">📡</span>
+          <div><h4>1 · Your data sources</h4>
+          <p>Meta metrics come from Pipeboard (your ad account ID). Newsletter metrics from wherever your client lives: Beehiiv, Substack, or a dashboard Claude reads in Chrome.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🎯</span>
+          <div><h4>2 · Your client's definition of good</h4>
+          <p>The KPI and its target (CPL under $2.50, CPQL under $20...). This is what turns numbers into "on track" or "needs action."</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🧾</span>
+          <div><h4>3 · One great past report</h4>
+          <p>Paste your best one as the GOOD example, and optionally a bad one to avoid. This does more than any list of rules.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">💬</span>
+          <div><h4>4 · Where it goes</h4>
+          <p>Your review channel first (#pm-you), client channel only after you approve. The gate is part of the skill.</p></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mono-label">Say this to Claude, word for word</div>
+      <div class="mono">Read the <span class="k">howtoai-weekly-report</span> skill
+from the tfm-skills plugin. That's the
+simple one. (ww-friday-report is the
+multi-account complex one.)
+
+Build <span class="k">my-[client]-weekly-report</span>
+based on it, with my specifics:
+- Meta via Pipeboard, account <span class="s">[ID]</span>
+- Newsletter metrics via <span class="s">[Beehiiv /
+  Substack / dashboard URL]</span>
+- KPI: <span class="s">[CPL]</span>, target <span class="s">[$X]</span>
+- Here's a great past report as the
+  example: <span class="s">[paste]</span>
+- Draft to <span class="s">#pm-[me]</span>, I review first.</div>
+      <div class="callout"><b>Then iterate, weekly:</b> every time you correct a draft ("don't lead with CPM", "the client hates the word fatigue"), tell Claude to bake that correction into the skill. Three Fridays in, it writes the report the way you would.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION C2: WHAT IS A SKILL ============ -->
+
+<!-- W1. DEFINITION -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>What is a skill?</div>
+  <h2>A skill is nothing more than <span class="gradient-text">an automated task.</span></h2>
+  <div class="cards c3">
+    <div class="card">
+      <span class="icon">🔁</span>
+      <h3>A task is steps</h3>
+      <p>Everything you do for a client is a sequence of steps you repeat: search, read, write, build, send.</p>
+    </div>
+    <div class="card">
+      <span class="icon">✍️</span>
+      <h3>A skill is those steps, written down</h3>
+      <p>Plain English instructions that Claude follows the same way, every single time.</p>
+    </div>
+    <div class="card">
+      <span class="icon">⚖️</span>
+      <h3>Task complexity = skill complexity</h3>
+      <p>A one-step task makes a 5-minute skill. A 13-step task makes a skill you refine over weeks. Same recipe, different size.</p>
+    </div>
+  </div>
+  <div class="punchline">So before building any skill, map the task. <span class="gradient-cool">Let's map two.</span></div>
+</section>
+
+<!-- W2. COMPLEX TASK MIND MAP -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>What is a skill? · a complex task</div>
+  <h2 style="font-size:clamp(20px,2.3vw,36px); margin-bottom:.6vh">Delivering one concept, <span class="gradient-text">the manual way.</span></h2>
+  <div class="legend">
+    <span><i style="background:#38bdf8"></i>Research</span>
+    <span><i style="background:#a78bfa"></i>Ideation</span>
+    <span><i style="background:#ec4899"></i>Copywriting</span>
+    <span><i style="background:#f97316"></i>Ops &amp; handoff</span>
+    <span><i style="background:#6ee7b7"></i>Per-GM extras</span>
+  </div>
+  <div class="mm-stage">
+    <svg class="mm-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="50" y2="14" style="--d:.25s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="69.5" y2="17.5" style="--d:.41s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="84.6" y2="29" style="--d:.57s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="91.7" y2="45.4" style="--d:.73s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="89.3" y2="63.5" style="--d:.89s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="77.8" y2="78.5" style="--d:1.05s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="60" y2="86.9" style="--d:1.21s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="40" y2="86.9" style="--d:1.37s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="22.2" y2="78.5" style="--d:1.53s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="10.7" y2="63.5" style="--d:1.69s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="8.3" y2="45.4" style="--d:1.85s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="15.4" y2="29" style="--d:2.01s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="30.5" y2="17.5" style="--d:2.17s"/>
+    </svg>
+    <div class="mm-center" style="--d:0s">One concept,<br>delivered</div>
+    <div class="mm-node research" style="left:50%; top:14%; --d:.35s"><span class="mi">🔍</span>Inspirations: Meta, Foreplay, social</div>
+    <div class="mm-node research" style="left:69.5%; top:17.5%; --d:.51s"><span class="mi">📈</span>What's already working in the account</div>
+    <div class="mm-node research" style="left:84.6%; top:29%; --d:.67s"><span class="mi">🏆</span>Winning formats + angles</div>
+    <div class="mm-node idea" style="left:91.7%; top:45.4%; --d:.83s"><span class="mi">🧩</span>Combine into 5+ angles and formats</div>
+    <div class="mm-node copy" style="left:89.3%; top:63.5%; --d:.99s"><span class="mi">✍️</span>Headline variations</div>
+    <div class="mm-node copy" style="left:77.8%; top:78.5%; --d:1.15s"><span class="mi">🎯</span>ICPs, dream outcomes, pain points</div>
+    <div class="mm-node copy" style="left:60%; top:86.9%; --d:1.31s"><span class="mi">📝</span>Full body copy</div>
+    <div class="mm-node ops" style="left:40%; top:86.9%; --d:1.47s"><span class="mi">📄</span>Notion concept page</div>
+    <div class="mm-node ops" style="left:22.2%; top:78.5%; --d:1.63s"><span class="mi">📁</span>Drive folder</div>
+    <div class="mm-node ops" style="left:10.7%; top:63.5%; --d:1.79s"><span class="mi">🎨</span>Designer brief</div>
+    <div class="mm-node ops" style="left:8.3%; top:45.4%; --d:1.95s"><span class="mi">📤</span>Send to the designer</div>
+    <div class="mm-node gmx" style="left:15.4%; top:29%; --d:2.11s"><span class="mi">➕</span>Luiz: Google Sheet with the copy for the client</div>
+    <div class="mm-node gmx" style="left:30.5%; top:17.5%; --d:2.27s"><span class="mi">➕</span>Abdo: page on the client approval dashboard</div>
+  </div>
+  <div class="punchline" style="margin-top:.6vh; font-size:clamp(14px,1.5vw,22px)">13+ steps, 4 tools, and it varies per GM. Complex task, <span class="gradient-text">so /concept-ideation is a complex skill.</span></div>
+</section>
+
+<!-- W3. SIMPLE TASK MIND MAP -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>What is a skill? · a simple task</div>
+  <h2>And a simple task? <span class="gradient-cool">One step.</span></h2>
+  <div class="mm-stage" style="height:38vh">
+    <svg class="mm-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <line class="mm-line" pathLength="1" x1="29" y1="50" x2="40" y2="50" style="--d:.55s"/>
+      <line class="mm-line" pathLength="1" x1="60" y1="50" x2="71" y2="50" style="--d:1.15s"/>
+    </svg>
+    <div class="mm-node" style="left:17%; top:50%; max-width:20vw; --d:.2s"><span class="mi">🗣️</span>"Analyze this ad on Foreplay for me"</div>
+    <div class="mm-center" style="--d:.75s">/foreplay<br><span style="font-weight:500; font-size:.78em">reads the ad</span></div>
+    <div class="mm-node" style="left:83%; top:50%; max-width:20vw; --d:1.35s"><span class="mi">💬</span>A quick review back in chat: hook, headline, body, primary text</div>
+  </div>
+  <div class="punchline">One step in, one answer out. <span class="gradient-cool">/foreplay is a simple skill.</span> You could build one like it today.</div>
+</section>
+
+<!-- W3b. SIMPLE TASK, FOR REAL -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>What is a skill? · a simple task, for real</div>
+  <h2 style="margin-bottom:1.2vh">Here it is, <span class="gradient-cool">actually running.</span></h2>
+  <div class="two-col" style="grid-template-columns: 1.25fr .75fr; align-items: center;">
+    <div class="shot-wrap">
+      <img class="shot" src="assets/foreplay-run.png" alt="" style="max-height:62vh">
+      <div class="shot-caption">The real run: "/foreplay analyze this ad" + the ad ID. One line in, full breakdown out: what the ad is, the 5 hooks it rotates, and why it works.</div>
+    </div>
+    <div class="shot-wrap">
+      <img class="shot" src="assets/foreplay-ad.png" alt="" style="max-height:60vh">
+      <div class="shot-caption">The ad it analyzed: The Marketing Millennials, live for 119 days</div>
+    </div>
+  </div>
+  <div class="punchline" style="margin-top:1vh">One step in, one answer out. <span class="gradient-cool">/foreplay is a simple skill.</span> You could build one like it today.</div>
+</section>
+
+<!-- W4. TAKEAWAY -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>What is a skill? · the takeaway</div>
+  <h2>Same recipe, <span class="gradient-text">different size.</span></h2>
+  <div class="cards c2">
+    <div class="card">
+      <h3 style="color:#f9a8d4">/concept-ideation</h3>
+      <p>13+ steps across 4 tools, with per-GM variations. A complex skill, grown and refined over weeks of real use.</p>
+      <span class="quote-line">complex task → complex skill</span>
+    </div>
+    <div class="card">
+      <h3 style="color:#6ee7b7">/foreplay</h3>
+      <p>One step: read the ad, review the copy. A simple skill, built in minutes.</p>
+      <span class="quote-line">simple task → simple skill</span>
+    </div>
+  </div>
+  <div class="punchline">Both were built the exact same way: <span class="gradient-cool">writing the steps down.</span> Start simple, your first skill should automate a one-step task. And there's a tool that writes it with you...</div>
+</section>
+
+<!-- W5. SKILL CREATOR -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The skill that builds skills</div>
+  <div class="skill-head" style="margin-bottom:.4vh">
+    <h2 style="font-size:clamp(22px,2.6vw,40px)">Meet <span class="gradient-text">/skill-creator.</span></h2>
+    <span class="chip dim">official Anthropic plugin · already part of the setup</span>
+  </div>
+  <div class="mm-stage" style="height:54vh">
+    <svg class="mm-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="24" y2="24" style="--d:.3s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="76" y2="24" style="--d:.75s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="24" y2="76" style="--d:1.2s"/>
+      <line class="mm-line" pathLength="1" x1="50" y1="50" x2="76" y2="76" style="--d:1.65s"/>
+    </svg>
+    <div class="mm-center" style="--d:0s">/skill-creator</div>
+    <div class="mm-node idea" style="left:24%; top:24%; max-width:21vw; --d:.4s"><span class="mi">🆕</span><b>Creates new skills</b><br>Interviews you: what's the task, when should it trigger, what does good output look like. Then writes the SKILL.md draft for you.</div>
+    <div class="mm-node copy" style="left:76%; top:24%; max-width:21vw; --d:.85s"><span class="mi">🛠️</span><b>Improves existing ones</b><br>Edits or restructures any skill you already have, including your forks of the plugin skills.</div>
+    <div class="mm-node research" style="left:24%; top:76%; max-width:21vw; --d:1.3s"><span class="mi">🧪</span><b>Tests them</b><br>Generates test prompts, runs them in the background, and shows you the results so you can compare versions.</div>
+    <div class="mm-node ops" style="left:76%; top:76%; max-width:21vw; --d:1.75s"><span class="mi">🎯</span><b>Tunes the trigger</b><br>Rewrites the skill's description so it fires at the right moments, and stays quiet when it shouldn't.</div>
+  </div>
+  <div class="punchline" style="margin-top:.4vh">You never write a skill from scratch. <span class="gradient-cool">You answer questions, it writes.</span></div>
+</section>
+
+<!-- ============ SECTION D: LIVE BUILD ============ -->
+
+<!-- 19. THE TASK -->
+<section class="slide">
+  <div class="badge live">● LIVE BUILD</div>
+  <h2>Let's build one, <span class="gradient-text">live.</span></h2>
+  <p class="sub">The task: writing killer hooks. You want hook variations to test, you're out of ideas, and you need 5 fresh ones for your client. Simple task, one step. Here's how we turn it into a skill:</p>
+  <div class="step-row" style="margin-top:3vh">
+    <div class="step">
+      <div class="n gradient-cool">01</div>
+      <h4>Run it as a prompt</h4>
+      <p>Write the brief once, in chat, and watch it work on a real hook.</p>
+    </div>
+    <div class="step">
+      <div class="n gradient-cool">02</div>
+      <h4>Freeze it with /skill-creator</h4>
+      <p>Hand it the structure, the rules, and one good + one bad example. It writes the SKILL.md.</p>
+    </div>
+    <div class="step">
+      <div class="n gradient-cool">03</div>
+      <h4>Run /hook-rewriter forever</h4>
+      <p>From now on it's one line + a hook. For you and anyone with the skill.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 20. THE RAW PROMPT -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>Live build · the prompt, in full</div>
+  <div class="two-col">
+    <div>
+      <h2>This is the <span class="gradient-cool">brief.</span></h2>
+      <p class="sub">One task, five angles, clear rules, one hook. Two minutes to type, and it works. The problem: I'd retype it every time I need angles.</p>
+      <div class="flow" style="margin-top:2vh">
+        <div class="row"><b>In</b><span>one hook that's already working</span></div>
+        <div class="row"><b>Out</b><span>5 rewrites, one per angle: confession, identity, specificity, counterintuitive, social proof</span></div>
+      </div>
+      <div class="callout"><b>Recognize the hook?</b> It's Hook 2 from the DCT_167 run you saw earlier. Ruben's winning angle, about to become five.</div>
+    </div>
+    <div>
+      <div class="mono-label">Typed live, in chat</div>
+      <div class="mono">Rewrite this hook 5 ways, one per angle:
+confession, identity, specificity,
+counterintuitive, social proof.
+
+Rules:
+- Keep the original promise intact
+- Under 15 words, first person
+- Plain language: no hype words, no
+  "game-changer", no "unlock"
+- No em dashes
+- Label each rewrite with its angle
+
+Hook: <span class="s">"I've spent over 1,000 hours
+figuring out Claude, so you
+don't have to."</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 21. SKILL-CREATOR TRANSFORMATION -->
+<section class="slide">
+  <div class="badge live">● LIVE BUILD</div>
+  <div class="two-col" style="grid-template-columns: .85fr 1.15fr;">
+    <div>
+      <h2>Now we <span class="gradient-text">freeze it.</span></h2>
+      <p class="sub" style="margin-top:1.5vh">One message to /skill-creator turns the prompt into a permanent skill. A good transformation brief has four parts:</p>
+      <div class="flow" style="margin-top:1.5vh">
+        <div class="row"><b>Trigger</b><span>when should the skill fire</span></div>
+        <div class="row"><b>Structure</b><span>what goes in, what comes out, in what format</span></div>
+        <div class="row"><b>Rules</b><span>the guardrails, copied from the prompt that just worked</span></div>
+        <div class="row"><b>Examples</b><span>one good output and one bad output, so it knows the difference</span></div>
+      </div>
+      <div class="callout"><b>This recipe builds any skill.</b> Swap the task, keep the four parts.</div>
+    </div>
+    <div>
+      <div class="mono-label">The transformation prompt, sent live</div>
+      <div class="mono" style="font-size:clamp(10px,.95vw,13px); line-height:1.55">/skill-creator create a skill called <span class="k">hook-rewriter</span>.
+
+<span class="k">Trigger:</span> when I run /hook-rewriter or ask for
+hook variations or angles.
+
+<span class="k">Structure:</span> input is one hook that already works.
+Output is 5 rewrites, one per angle, labeled:
+confession, identity, specificity,
+counterintuitive, social proof.
+
+<span class="k">Rules:</span>
+- Keep the original promise intact
+- Under 15 words, first person
+- Plain language: no hype words, no
+  "game-changer", no "unlock"
+- No em dashes
+- Label each rewrite with its angle
+
+<span class="k">Good output:</span>
+<span class="s">Confession: "I'll admit it: I burned 1,000 hours
+on Claude so you can skip them."
+Identity: "I'm the person my whole office asks
+about AI. This is why."
+Specificity: "1,000 hours of Claude testing,
+condensed into a 5-minute read, twice a week."
+Counterintuitive: "Stop trying to keep up with
+AI. I already did it for you."
+Social proof: "Thousands of readers skip the
+1,000 hours I spent figuring out Claude."</span>
+
+<span class="k">Bad output:</span>
+<span class="r">"Unlock the game-changing power of AI in
+minutes!" (hype words, promise lost, no label)</span>
+
+Keep it simple: just the SKILL.md, no scripts.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 22. PAYOFF -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The payoff</div>
+  <div class="cards c2">
+    <div class="card">
+      <h3 style="color:#fda4af">Every time, before</h3>
+      <div class="mono" style="margin-top:1.5vh">"Rewrite this hook 5 ways, one per
+angle: confession, identity,
+specificity, counterintuitive, social
+proof. Keep the promise, under 15
+words, no hype words, label each..."
+
+<span class="c">retyped every time you need angles</span></div>
+    </div>
+    <div>
+      <div class="card">
+        <h3 style="color:#6ee7b7">Every time, after</h3>
+        <div class="mono" style="margin-top:1.5vh"><span class="k">/hook-rewriter</span>
+<span class="c">"I've spent over 1,000 hours figuring
+out Claude, so you don't have to."</span></div>
+      </div>
+      <div class="punchline" style="margin-top:3vh">Write the brief once.<br><span class="gradient-text">Never again.</span><br><span style="font-size:.7em; color:var(--muted); font-weight:500">And once it's in the plugin, "never again" applies to the whole team.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION E: CLOSE ============ -->
+
+<!-- 22b. TONS OF SKILLS -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>Where this goes</div>
+  <div class="two-col report-col" style="grid-template-columns: .95fr 1.05fr;">
+    <div>
+      <h2>Then you build another. <span class="gradient-text">And another.</span></h2>
+      <p class="sub" style="margin-top:1.5vh">This is my /skills list today: 43 skills, each one automating one thing I needed. And they talk to each other:</p>
+      <div class="flow" style="margin-top:1.5vh">
+        <div class="row"><b>→</b><span>/competitor-research feeds its concept seeds into /concept-ideation</span></div>
+        <div class="row"><b>→</b><span>/foreplay pulls the inspiration the templates build from</span></div>
+        <div class="row"><b>→</b><span>/ads-launch-check QAs what the concepts ship</span></div>
+        <div class="row"><b>→</b><span>/newsletter-analyzer feeds editorial context into every template</span></div>
+      </div>
+      <div class="callout"><b>The ones that proved useful became the TFM plugin.</b> One skill at a time, the whole workflow connected itself.</div>
+    </div>
+    <div class="shot-wrap">
+      <img class="shot" src="assets/skills-list.png" alt="" style="max-height:76vh">
+      <div class="shot-caption">My /skills list, today. It started with one.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 23. THE CHALLENGE -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>Your turn</div>
+  <h2>Build one. <span class="gradient-text">Ship it to everyone.</span></h2>
+  <ul class="clean">
+    <li>Pick <b>one task you repeat every week</b> that follows the same steps</li>
+    <li>Build it with <b>/skill-creator</b>, or send me a one-pager: task, steps, example of good output, don'ts</li>
+    <li>I review it and ship it to the plugin, <b>with your name on it</b></li>
+    <li>Deadline: <b>Sindy will set it.</b> Next team call opens with your skill running live.</li>
+  </ul>
+</section>
+
+<!-- 24. GETTING STARTED -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>Zero excuses</div>
+  <h2>How to start: <span class="gradient-cool">one page.</span></h2>
+  <div class="cards c2">
+    <div class="card">
+      <h3>🚀 Step 1: the Start Here page</h3>
+      <p style="margin-bottom:1.2vh">Everything is there: the one-time install (Claude desktop app in CODE), the GitHub step, and every skill as a card with its own tutorial. Once installed, my updates sync to your Claude automatically.</p>
+      <div class="shot-wrap">
+        <img class="shot" src="assets/start-here.png" alt="" style="max-height:40vh">
+        <div class="shot-caption">AI Stuff DB → Start Here, in Notion</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🤝 Optional: book 30 min with me</h3>
+      <p style="margin-bottom:1.2vh">If you'd rather do the setup together, or build your first skill with backup, grab a slot. We'll get you running on your own accounts in one call.</p>
+      <div class="shot-wrap">
+        <img class="shot" src="assets/calendar.png" alt="" style="max-height:34vh">
+      </div>
+      <div class="shot-actions" style="margin-top:1.2vh">
+        <a class="btn-link" href="https://calendar.app.google/2gZc1JfkYxvjcKph9" target="_blank" rel="noopener">Book 30 min with Lays ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 25. FUN CLOSER -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>One last thing</div>
+  <div class="skill-head" style="margin-bottom:1vh">
+    <h1 style="font-size:clamp(26px,3.2vw,52px)">Oh, and this deck? <span class="gradient-text">Also Claude. 😈</span></h1>
+  </div>
+  <p class="sub" style="margin-top:0; margin-bottom:1.6vh">The slides, the mind maps, the animations, every screenshot placed where it is. Built in a Claude chat, the same way everything else you saw today was.</p>
+  <div class="shot-wrap">
+    <video id="closer-video" src="assets/chat-recording.mp4" muted loop playsinline style="max-height:58vh; max-width:100%; border-radius:14px; border:1px solid var(--border); box-shadow:0 20px 60px rgba(0,0,0,.5);"></video>
+    <div class="shot-caption">The actual chat, recorded this morning. It really is skills all the way down.</div>
+  </div>
+</section>
+
+<!-- 26. QUESTIONS -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The floor is yours</div>
+  <h1><span class="gradient-text">Questions?</span></h1>
+  <p class="sub">About any skill, the setup, skill-creator, or the thing you're already imagining automating.</p>
+</section>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const hint = document.getElementById('hint');
+  let i = 0;
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    progress.style.width = ((i + 1) / slides.length * 100) + '%';
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+    document.querySelectorAll('video').forEach(v => {
+      if (v.closest('.slide').classList.contains('active')) { v.currentTime = 0; v.play(); }
+      else v.pause();
+    });
+  }
+  function next() { show(i + 1); hint.classList.add('hide'); }
+  function prev() { show(i - 1); hint.classList.add('hide'); }
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = lightbox.querySelector('img');
+  document.querySelectorAll('.shot').forEach(img => {
+    img.addEventListener('click', () => {
+      lightboxImg.src = img.src;
+      lightbox.classList.add('open');
+    });
+  });
+  lightbox.addEventListener('click', () => lightbox.classList.remove('open'));
+  document.addEventListener('keydown', e => {
+    if (lightbox.classList.contains('open')) {
+      if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); lightbox.classList.remove('open'); }
+      return;
+    }
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+  });
+  document.getElementById('next').onclick = next;
+  document.getElementById('prev').onclick = prev;
+  setTimeout(() => hint.classList.add('hide'), 6000);
+  show(0);
+</script>
+</body>
+</html>
