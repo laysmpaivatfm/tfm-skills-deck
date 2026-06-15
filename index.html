@@ -737,6 +737,75 @@ based on it, with my specifics:
   </div>
 </section>
 
+<!-- 4e2. REAL NEW REPORT FROM TWO OLD ONES -->
+<section class="slide">
+  <div class="kicker"><span class="dot"></span>The plugin · a real new report, live</div>
+  <div class="skill-head">
+    <span class="icon">🆕</span>
+    <h2>A third report, <span class="gradient-cool">from two you already have.</span></h2>
+    <span class="chip">new client skill, in one message</span>
+  </div>
+  <div class="two-col">
+    <div>
+      <p class="sub" style="margin-top:0; margin-bottom:1.6vh">New client, Thorium Valley, needs a Friday report. I didn't write one from scratch. I pointed Claude at two report skills that already work and described only what's different:</p>
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="picon">📋</span>
+          <div><h4>1 · Hand it two reports that already work</h4>
+          <p>"/ww-friday-report and /bbg-weekly-report as reference guidelines." It inherits their structure, my voice and the review gate. No blank page.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">📐</span>
+          <div><h4>2 · Spell out the metrics that matter</h4>
+          <p>CPL and CVR per ad set, total spend, average purchase. Plus the health rule: flag each ad set green / yellow / orange / red against target.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">🔌</span>
+          <div><h4>3 · Point it at this client's sources</h4>
+          <p>Beehiiv API for open rate + CTR per ad over the last 7d (our ads carry "dct" in the source). Pipeboard is down, so Meta comes from Claude reading Chrome.</p></div>
+        </div>
+        <div class="pstep">
+          <span class="picon">✂️</span>
+          <div><h4>4 · Cut what this client doesn't need</h4>
+          <p>No budget pacing, no winning-angle analysis. Two sections, Meta and Beehiiv, plus a top-3 ads highlight. Then: "run a draft."</p></div>
+        </div>
+      </div>
+      <div class="callout"><b>The shortcut:</b> a new skill rarely starts from zero. Give Claude two skills that already work as the template, list only the deltas, and the first draft of <b>/tv-weekly-report</b> comes back ready to refine.</div>
+    </div>
+    <div>
+      <div class="mono-label">The actual prompt, sent live</div>
+      <div class="mono" style="font-size:clamp(10px,.95vw,13px); line-height:1.55">Use <span class="k">/ww-friday-report</span> and <span class="k">/bbg-weekly-report</span>
+as reference guidelines to create a new weekly
+report skill for Thorium Valley. Call it
+<span class="k">/tv-weekly-report</span>.
+
+What to report:
+- CPL on Meta, and per ad set
+- CVR on Meta, and per ad set
+  (cvr = subscriber_created / unique
+  outbound clicks)
+- total spend
+- average purchase, campaign + per ad set
+
+Flag each ad set <span class="s">green / yellow / orange / red</span>
+against target. Use the Beehiiv API key
+<span class="r">[Beehiiv API key]</span> for open rate + CTR per ad,
+averaged over the last 7d. Our ads carry "dct"
+in the acquisition source.
+
+Pipeboard is down, so pull Meta metrics with
+Claude + Chrome dev tools for now.
+
+We don't need budget pacing or winning-angle
+analysis. Just two sections, Meta metrics and
+Beehiiv metrics, plus a top-3 ads highlight
+(best leads + CTR on Beehiiv).
+
+Let's run a draft to see how it works.</div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ SECTION C2: WHAT IS A SKILL ============ -->
 
 <!-- W1. DEFINITION -->
