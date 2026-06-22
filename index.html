@@ -1255,6 +1255,19 @@ out Claude, so you don't have to."</span></div>
   });
   document.getElementById('next').onclick = next;
   document.getElementById('prev').onclick = prev;
+
+  // scroll / trackpad navigation: one gesture = one slide
+  let wheelLock = false;
+  window.addEventListener('wheel', e => {
+    if (lightbox.classList.contains('open')) return;
+    if (wheelLock) return;
+    const d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    if (Math.abs(d) < 12) return;
+    wheelLock = true;
+    if (d > 0) next(); else prev();
+    hint.classList.add('hide');
+    setTimeout(() => { wheelLock = false; }, 700);
+  }, { passive: true });
   setTimeout(() => hint.classList.add('hide'), 6000);
   show(0);
 </script>
